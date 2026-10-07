@@ -119,6 +119,10 @@ header {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
 }
 
+.modal-confirmation {
+  width: min(90vw, 420px);
+}
+
 #lista-tarefas td {
   vertical-align: middle;
 }

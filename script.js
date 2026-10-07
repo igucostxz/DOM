@@ -20,10 +20,15 @@ const toggleEditarData = document.querySelector('#toggle-editar-data');
 const campoEditarData = document.querySelector('#campo-editar-data');
 const editarDias = document.querySelector('#editar-dias');
 const cancelarEdicao = document.querySelector('#cancelar-edicao');
+const modalConfirmacao = document.querySelector('#modal-confirmacao');
+const confirmacaoTexto = document.querySelector('#confirmacao-texto');
+const cancelarExclusao = document.querySelector('#cancelar-exclusao');
+const confirmarExclusao = document.querySelector('#confirmar-exclusao');
 
 let tarefas = [];
 let darkMode = false;
 const lembretesAgendados = new Map();
+let tarefaParaExcluir = null;
 
 function getDiasSelecionados(container) {
   return [...container.querySelectorAll('input[type="checkbox"]:checked')].map((checkbox) => Number(checkbox.value));
@@ -270,8 +275,42 @@ function marcarComoConcluida(id) {
   renderizarTarefas();
 }
 
+function abrirModalConfirmacao(id) {
+  const tarefa = tarefas.find((item) => item.id === id);
+
+  if (!tarefa) {
+    return;
+  }
+
+  tarefaParaExcluir = tarefa;
+  confirmacaoTexto.textContent = `Deseja realmente excluir a tarefa "${tarefa.texto}"?`;
+  modalConfirmacao.classList.remove('hidden');
+  modalConfirmacao.setAttribute('aria-hidden', 'false');
+}
+
+function fecharModalConfirmacao() {
+  modalConfirmacao.classList.add('hidden');
+  modalConfirmacao.setAttribute('aria-hidden', 'true');
+  tarefaParaExcluir = null;
+}
+
 function removerTarefa(id) {
-  tarefas = tarefas.filter((tarefa) => tarefa.id !== id);
+  const tarefa = tarefas.find((item) => item.id === id);
+
+  if (!tarefa) {
+    return;
+  }
+
+  abrirModalConfirmacao(id);
+}
+
+function confirmarRemocao() {
+  if (!tarefaParaExcluir) {
+    return;
+  }
+
+  const id = tarefaParaExcluir.id;
+  tarefas = tarefas.filter((item) => item.id !== id);
 
   const lembrete = lembretesAgendados.get(id);
   if (lembrete) {
@@ -281,6 +320,7 @@ function removerTarefa(id) {
 
   salvarTarefas();
   renderizarTarefas();
+  fecharModalConfirmacao();
 }
 
 function abrirModalEdicao(id) {
@@ -317,6 +357,15 @@ toggleDataTarefa.addEventListener('change', () => {
   if (!toggleDataTarefa.checked) {
     campoData.value = '';
   }
+});
+
+campoTarefa.addEventListener('keydown', (evento) => {
+  if (evento.key !== 'Enter') {
+    return;
+  }
+
+  evento.preventDefault();
+  campoHora.focus();
 });
 
 formTarefa.addEventListener('submit', (evento) => {
@@ -419,6 +468,14 @@ cancelarEdicao.addEventListener('click', fecharModalEdicao);
 modalEditar.addEventListener('click', (evento) => {
   if (evento.target === modalEditar) {
     fecharModalEdicao();
+  }
+});
+
+cancelarExclusao.addEventListener('click', fecharModalConfirmacao);
+confirmarExclusao.addEventListener('click', confirmarRemocao);
+modalConfirmacao.addEventListener('click', (evento) => {
+  if (evento.target === modalConfirmacao) {
+    fecharModalConfirmacao();
   }
 });
 
