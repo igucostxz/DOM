@@ -34,6 +34,30 @@ function getDiasSelecionados(container) {
   return [...container.querySelectorAll('input[type="checkbox"]:checked')].map((checkbox) => Number(checkbox.value));
 }
 
+function obterDataMinima() {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+function aplicarMinimaData(input) {
+  if (!input) {
+    return;
+  }
+
+  const min = obterDataMinima();
+  input.min = min;
+
+  if (input.value && input.value < min) {
+    input.value = '';
+  }
+}
+
 function formatarDias(diasSemana = []) {
   if (!diasSemana.length) {
     return '—';
@@ -354,9 +378,13 @@ function fecharModalEdicao() {
 
 toggleDataTarefa.addEventListener('change', () => {
   campoDataTarefa.style.display = toggleDataTarefa.checked ? 'block' : 'none';
-  if (!toggleDataTarefa.checked) {
-    campoData.value = '';
+
+  if (toggleDataTarefa.checked) {
+    aplicarMinimaData(campoData);
+    return;
   }
+
+  campoData.value = '';
 });
 
 campoTarefa.addEventListener('keydown', (evento) => {
@@ -388,6 +416,12 @@ formTarefa.addEventListener('submit', (evento) => {
     return;
   }
 
+  if (data && data < obterDataMinima()) {
+    alert('A data específica não pode ser anterior à data atual.');
+    campoData.focus();
+    return;
+  }
+
   campoTarefa.classList.remove('is-invalid');
   adicionarTarefa(texto, horario || null, data || null, diasSemana);
   formTarefa.reset();
@@ -398,9 +432,13 @@ formTarefa.addEventListener('submit', (evento) => {
 
 toggleEditarData.addEventListener('change', () => {
   campoEditarData.style.display = toggleEditarData.checked ? 'block' : 'none';
-  if (!toggleEditarData.checked) {
-    editarData.value = '';
+
+  if (toggleEditarData.checked) {
+    aplicarMinimaData(editarData);
+    return;
   }
+
+  editarData.value = '';
 });
 
 formEditar.addEventListener('submit', (evento) => {
@@ -420,6 +458,12 @@ formEditar.addEventListener('submit', (evento) => {
   if (!novoTexto) {
     editarTarefa.classList.add('is-invalid');
     editarTarefa.focus();
+    return;
+  }
+
+  if (novaData && novaData < obterDataMinima()) {
+    alert('A data específica não pode ser anterior à data atual.');
+    editarData.focus();
     return;
   }
 
@@ -482,6 +526,9 @@ modalConfirmacao.addEventListener('click', (evento) => {
 themeToggle.addEventListener('click', alternarTema);
 
 function iniciar() {
+  aplicarMinimaData(campoData);
+  aplicarMinimaData(editarData);
+
   tarefas = obterTarefas();
   tarefas.forEach((tarefa) => agendarLembrete(tarefa));
   renderizarTarefas();
